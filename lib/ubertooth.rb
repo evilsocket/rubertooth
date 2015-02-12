@@ -192,6 +192,30 @@ class Ubertooth
         raise "Command failed: #{r}" unless r == 0
     end
 
+    def btle_slave mac_address
+        sent = @iface.control_transfer({
+            :bmRequestType => CTRL_OUT,
+            :bRequest => COMMANDS[:UBERTOOTH_BTLE_SLAVE],
+            :wValue => 0,
+            :wIndex => 0,
+            :dataOut => mac_address,
+            :timeout => 1000
+        })
+        raise "Failed to send data: #{sent}" unless sent == mac_address.size
+    end
+
+    def btle_set_target mac_address
+        sent = @iface.control_transfer({
+            :bmRequestType => CTRL_OUT,
+            :bRequest => COMMANDS[:UBERTOOTH_BTLE_SET_TARGET],
+            :wValue => 0,
+            :wIndex => 0,
+            :dataOut => mac_address,
+            :timeout => 1000
+        })
+        raise "Failed to send data: #{sent}" unless sent == mac_address.size
+    end
+
     def poll
         data = @iface.control_transfer({
             :bmRequestType => CTRL_IN,
