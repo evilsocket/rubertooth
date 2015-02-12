@@ -156,6 +156,33 @@ class Ubertooth
         raise "Command failed: #{r}" unless r == 0
     end
 
+    def get_access_address
+        data = @iface.control_transfer({
+            :bmRequestType => CTRL_IN,
+            :bRequest => COMMANDS[:UBERTOOTH_GET_ACCESS_ADDRESS],
+            :wValue => 0,
+            :wIndex => 0,
+            :dataIn => 4,
+            :timeout => 3000
+        })
+        raise "Command failed." unless data and data.size == 4
+
+        data[0] | data[1] << 8 | data[2] << 16 | data[3] << 24
+    end
+
+    def set_access_address address
+        data = [address].pack "I"
+        sent = @iface.control_transfer({
+            :bmRequestType => CTRL_OUT,
+            :bRequest => COMMANDS[:UBERTOOTH_SET_ACCESS_ADDRESS],
+            :wValue => 0,
+            :wIndex => 0,
+            :dataOut => data,
+            :timeout => 1000
+        })
+        raise "Failed to send data: #{sent}" unless sent == data.size
+    end
+
     def set_channel channel
         r = @iface.control_transfer({
             :bmRequestType => CTRL_OUT,
