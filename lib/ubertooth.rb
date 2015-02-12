@@ -180,6 +180,18 @@ class Ubertooth
         raise "Command failed: #{r}" unless r == 0
     end
 
+    def btle_promisc
+        r = @iface.control_transfer({
+            :bmRequestType => CTRL_OUT,
+            :bRequest => COMMANDS[:UBERTOOTH_BTLE_PROMISC],
+            :wValue => 0,
+            :wIndex => 0,
+            :timeout => 1000
+        })
+
+        raise "Command failed: #{r}" unless r == 0
+    end
+
     def poll
         data = @iface.control_transfer({
             :bmRequestType => CTRL_IN,

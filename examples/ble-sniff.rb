@@ -4,11 +4,19 @@ require 'ubertooth'
 require 'usbpktrx'
 require 'lepacket'
 
+MODES = { :follow => 0, :promisc => 1 }
+
+mode = MODES[:follow]
 uber = RUbertooth::Ubertooth.new
 
 uber.set_modulation RUbertooth::Ubertooth::MODULATIONS[:MOD_BT_LOW_ENERGY]
-uber.set_channel 2402
-uber.btle_sniffing 2
+
+if mode == MODES[:follow]
+    uber.set_channel 2402
+    uber.btle_sniffing 2
+else
+    uber.btle_promisc
+end
 
 prev_ts = 0
 

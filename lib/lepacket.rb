@@ -94,7 +94,7 @@ class LePacket
     def dump
         if is_data?
             printf "Data / AA %08x / %2d bytes\n", @access_address, @length
-            printf "    Channel Index: %d\n", @channel_idx
+            printf "    Channel Index: %d\n", @channel_index
             printf "    LLID: %d / %s\n", @llid, LLIDS[@llid]
             printf "    NESN: %d  SN: %d  MD: %d\n", @nesn, @sn, @md
             printf "    Opcode: %d / %s\n", @opcode, OPCODES[(@opcode<0x14)?@opcode:0x14]
