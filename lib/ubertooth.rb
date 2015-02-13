@@ -303,8 +303,6 @@ class Ubertooth
         num_xfers = num_blocks / xfer_blocks
         num_blocks = num_xfers * xfer_blocks
 
-        puts "xfer_size=#{xfer_size} xfer_blocks=#{xfer_blocks} num_xfers=#{num_xfers} num_blocks=#{num_blocks}"
-
         rx_syms num_blocks
 
         loop do
