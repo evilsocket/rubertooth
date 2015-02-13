@@ -10,8 +10,8 @@ puts "Found device: '#{uber.device.inspect}'"
 
 uber.set_modulation RUbertooth::Ubertooth::MODULATIONS[:MOD_BT_BASIC_RATE]
 
-uber.stream do |pkt|
-    printf "[freq=%d addr=%08x] ", pkt.frequency, pkt.access_address
+uber.stream do |pkt,bank|
+    printf "[bank=%d channel=%d freq=%d addr=%08x] ", bank, pkt.channel, pkt.frequency, pkt.access_address
     (4..pkt.data_length - 1).each do |i|
         printf "%02x", pkt.data[i]
     end

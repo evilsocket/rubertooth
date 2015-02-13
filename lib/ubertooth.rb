@@ -297,6 +297,7 @@ class Ubertooth
 
     def stream
         num_blocks = 0
+        bank = 0
         xfer_size = XFER_LEN > BUFFER_SIZE ? BUFFER_SIZE : XFER_LEN
         xfer_blocks = xfer_size / PKT_LEN
         xfer_size = xfer_blocks * PKT_LEN
@@ -313,8 +314,10 @@ class Ubertooth
                 pkt  = UsbPktRx.from_s data
                 # skip KEEP_ALIVE packets
                 if pkt.pkt_type != UsbPktRx::PACKET_TYPES[:KEEP_ALIVE]
-                    yield pkt
+                    yield pkt, bank
                 end
+
+                bank = (bank + 1) % NUM_BANKS
             end
         end
     end
