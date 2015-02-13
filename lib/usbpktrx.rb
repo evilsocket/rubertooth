@@ -26,6 +26,18 @@ class UsbPktRx < BinData::Record
         :MESSAGE    => 2,
         :KEEP_ALIVE => 3
     }
+
+    attr_accessor :frequency, :access_address, :data_length
+
+    def set_fields!
+        @frequency = channel + 2402
+        @access_address = 0
+        4.times do |i|
+            @access_address |= data[i] << (i * 8)
+        end
+        @data_length = ( data[5] & 0x3f ) + 9
+        @data_length = 50 unless @data_length <= 50
+    end
 end
 
 end

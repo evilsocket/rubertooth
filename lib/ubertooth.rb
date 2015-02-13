@@ -104,6 +104,8 @@ class Ubertooth
     CTRL_OUT = USB::LIBUSB_REQUEST_TYPE_VENDOR | USB::LIBUSB_ENDPOINT_OUT
     DMA_SIZE = 50
 
+    attr_reader :device
+
     def initialize
         @device = nil
         @handle = nil
@@ -256,11 +258,21 @@ class Ubertooth
         pkt = nil
         if data.size == UsbPktRx::SIZE
             pkt = UsbPktRx.read data
+            pkt.set_fields!
         end
 
         yield pkt
     end
 
+    def keep_polling every
+        loop do
+            poll do |pkt|
+                next unless not pkt.nil?
+                yield pkt
+            end
+            sleep every
+        end
+    end
 end
 
 end
