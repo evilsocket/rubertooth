@@ -29,6 +29,13 @@ class UsbPktRx < BinData::Record
 
     attr_accessor :frequency, :access_address, :data_length
 
+    def self.from_s data
+        pkt = self.read data
+        pkt.set_fields!
+
+        pkt
+    end
+
     def set_fields!
         @frequency = channel + 2402
         @access_address = 0

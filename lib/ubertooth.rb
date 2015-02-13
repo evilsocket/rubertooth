@@ -104,6 +104,15 @@ class Ubertooth
     CTRL_OUT = USB::LIBUSB_REQUEST_TYPE_VENDOR | USB::LIBUSB_ENDPOINT_OUT
     DMA_SIZE = 50
 
+    PKT_LEN       = 64
+    SYM_LEN       = 50
+    SYM_OFFSET    = 14
+    PKTS_PER_XFER = 8
+    NUM_BANKS     = 10
+    XFER_LEN      = PKT_LEN * PKTS_PER_XFER
+    BANK_LEN      = SYM_LEN * PKTS_PER_XFER
+    BUFFER_SIZE   = 102400
+
     attr_reader :device
 
     def initialize
@@ -121,6 +130,7 @@ class Ubertooth
 
         @handle = @device.open
         @iface = @handle.claim_interface(0)
+        @input_endpoint = @device.endpoints.find{|ep| ep.bEndpointAddress&LIBUSB::ENDPOINT_IN != 0 }
     end
 
     def do_something data
@@ -245,6 +255,18 @@ class Ubertooth
         raise "Failed to send data: #{sent}" unless sent == mac_address.size
     end
 
+    def rx_syms num
+        r = @iface.control_transfer({
+            :bmRequestType => CTRL_OUT,
+            :bRequest => COMMANDS[:UBERTOOTH_RX_SYMBOLS],
+            :wValue => num,
+            :wIndex => 0,
+            :timeout => 1000
+        })
+
+        raise "Command failed: #{r}" unless r == 0
+    end
+
     def poll
         data = @iface.control_transfer({
             :bmRequestType => CTRL_IN,
@@ -257,8 +279,7 @@ class Ubertooth
 
         pkt = nil
         if data.size == UsbPktRx::SIZE
-            pkt = UsbPktRx.read data
-            pkt.set_fields!
+            pkt = UsbPktRx.from_s data
         end
 
         yield pkt
@@ -271,6 +292,32 @@ class Ubertooth
                 yield pkt
             end
             sleep every
+        end
+    end
+
+    def stream
+        num_blocks = 0
+        xfer_size = XFER_LEN > BUFFER_SIZE ? BUFFER_SIZE : XFER_LEN
+        xfer_blocks = xfer_size / PKT_LEN
+        xfer_size = xfer_blocks * PKT_LEN
+        num_xfers = num_blocks / xfer_blocks
+        num_blocks = num_xfers * xfer_blocks
+
+        puts "xfer_size=#{xfer_size} xfer_blocks=#{xfer_blocks} num_xfers=#{num_xfers} num_blocks=#{num_blocks}"
+
+        rx_syms num_blocks
+
+        loop do
+            block = @handle.bulk_transfer :endpoint => @input_endpoint, :dataIn => xfer_size
+            # process each packet in the block
+            xfer_blocks.times do |i|
+                data = block[PKT_LEN * i, PKT_LEN]
+                pkt  = UsbPktRx.from_s data
+                # skip KEEP_ALIVE packets
+                if pkt.pkt_type != UsbPktRx::PACKET_TYPES[:KEEP_ALIVE]
+                    yield pkt
+                end
+            end
         end
     end
 end
