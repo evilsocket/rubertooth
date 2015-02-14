@@ -30,6 +30,8 @@ class UsbPktRx < BinData::Record
     attr_accessor :frequency, :access_address, :data_length
 
     def self.from_s data
+        raise "Invalid data size #{data.size}, expected at least #{SIZE}." unless data.size >= SIZE
+        
         pkt = self.read data
         pkt.set_fields!
 

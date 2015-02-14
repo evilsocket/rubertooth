@@ -1,4 +1,5 @@
 require 'libusb'
+require 'assembler'
 
 module RUbertooth
 
@@ -108,7 +109,6 @@ class Ubertooth
     SYM_LEN       = 50
     SYM_OFFSET    = 14
     PKTS_PER_XFER = 8
-    NUM_BANKS     = 10
     XFER_LEN      = PKT_LEN * PKTS_PER_XFER
     BANK_LEN      = SYM_LEN * PKTS_PER_XFER
     BUFFER_SIZE   = 102400
@@ -131,6 +131,7 @@ class Ubertooth
         @handle = @device.open
         @iface = @handle.claim_interface(0)
         @input_endpoint = @device.endpoints.find{|ep| ep.bEndpointAddress&LIBUSB::ENDPOINT_IN != 0 }
+        @assembler = Assembler.new
     end
 
     def do_something data
@@ -297,7 +298,6 @@ class Ubertooth
 
     def stream
         num_blocks = 0
-        bank = 0
         xfer_size = XFER_LEN > BUFFER_SIZE ? BUFFER_SIZE : XFER_LEN
         xfer_blocks = xfer_size / PKT_LEN
         xfer_size = xfer_blocks * PKT_LEN
@@ -306,18 +306,22 @@ class Ubertooth
 
         rx_syms num_blocks
 
+        bank = 0
+
         loop do
-            block = @handle.bulk_transfer :endpoint => @input_endpoint, :dataIn => xfer_size
+            block = @handle.bulk_transfer :endpoint => DATA_IN, :dataIn => xfer_size
             # process each packet in the block
             xfer_blocks.times do |i|
                 data = block[PKT_LEN * i, PKT_LEN]
                 pkt  = UsbPktRx.from_s data
-                # skip KEEP_ALIVE packets
-                if pkt.pkt_type != UsbPktRx::PACKET_TYPES[:KEEP_ALIVE]
-                    yield pkt, bank
+
+                ret = @assembler.on_rx pkt, bank
+                if not ret.nil?
+                    signal,noise,snr,btpkt = ret
+                    yield pkt,btpkt,signal,noise,snr
                 end
 
-                bank = (bank + 1) % NUM_BANKS
+                bank = (bank + 1) % Assembler::NUM_BANKS
             end
         end
     end
