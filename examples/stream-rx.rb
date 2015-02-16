@@ -8,6 +8,9 @@ uber = RUbertooth::Ubertooth.new
 
 puts "Found device: '#{uber.device.inspect}'"
 
+# set sweep mode
+uber.set_channel 9999
+
 puts "Waiting for data ...\n\n"
 
 uber.stream do |rx,pkt,signal,noise,snr|
