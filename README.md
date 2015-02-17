@@ -32,3 +32,7 @@ Copyright &copy; 2015, Simone Margaritelli
 
 <http://www.evilsocket.net/>  
 All rights reserved.
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/evilsocket/rubertooth/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
