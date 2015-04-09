@@ -1,4 +1,4 @@
-require 'btpacket'
+require 'bt_packet'
 
 module RUbertooth
 
