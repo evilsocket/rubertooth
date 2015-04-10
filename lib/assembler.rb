@@ -2,48 +2,48 @@ require 'bt_packet'
 
 module RUbertooth
 
-# Class to reassemble streams of data from the device removing noise.
-class Assembler
+  # Class to reassemble streams of data from the device removing noise.
+  class Assembler
     # lookup table for barker code hamming distance
     BARKER_DISTANCE = [
-        3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3,
-        3,2,2,1,2,1,1,0,3,3,3,2,3,2,2,1,3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,
-        2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3,1,2,2,3,2,3,3,3,0,1,1,2,1,2,2,3,
-        3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3]
+      3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3,
+      3,2,2,1,2,1,1,0,3,3,3,2,3,2,2,1,3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,
+      2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3,1,2,2,3,2,3,3,3,0,1,1,2,1,2,2,3,
+      3,3,3,2,3,2,2,1,2,3,3,3,3,3,3,2,2,3,3,3,3,3,3,2,1,2,2,3,2,3,3,3]
 
     BARKER_CORRECT = [
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
-        0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000]
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0x4e00000000000000, 0x4e00000000000000, 0x4e00000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0xb000000000000000,
+      0xb000000000000000, 0xb000000000000000, 0xb000000000000000, 0x4e00000000000000]
 
     PN = 0x83848D96BBCC54FC
 
@@ -69,195 +69,192 @@ class Assembler
     RSSI_HISTORY_LEN = NUM_BANKS
     RSSI_BASE =  -54 # CC2400 constant
 
-    @@syndrome_map = nil
 
     def initialize
-        @symbols = Array.new(NUM_BANKS) { Array.new Ubertooth::BANK_LEN, 0 }
-        @packets = Array.new NUM_BANKS, UsbPktRx.new
-        @rssi_history = Array.new(NUM_CHANNELS){ Array.new RSSI_HISTORY_LEN, -127 }
+      @symbols = Array.new(NUM_BANKS) { Array.new Ubertooth::BANK_LEN, 0 }
+      @packets = Array.new NUM_BANKS, UsbPktRx.new
+      @rssi_history = Array.new(NUM_CHANNELS) { Array.new RSSI_HISTORY_LEN, -127 }
+      @syndrome_map = nil
+
     end
 
-    def on_rx rx, bank
-        syms = Array.new( Ubertooth::BANK_LEN * NUM_BANKS, 0 )
+    def on_rx(rx, bank)
+      syms = Array.new(Ubertooth::BANK_LEN * NUM_BANKS, 0)
 
-        # Copy packet (for dump)
-        @packets[bank] = rx
+      # Copy packet (for dump)
+      @packets[bank] = rx
 
-        unpack_symbols rx.data, bank
+      unpack_symbols rx.data, bank
 
-        rx = @packets[ ( bank + 1 ) % NUM_BANKS ]
+      rx = @packets[(bank + 1) % NUM_BANKS]
 
-        # Shift rssi max history and append current max
-        @rssi_history[rx.channel] = @rssi_history[rx.channel][1,RSSI_HISTORY_LEN-1] + [-127]
-        @rssi_history[rx.channel][RSSI_HISTORY_LEN-1] = rx.rssi_max
+      # Shift rssi max history and append current max
+      @rssi_history[rx.channel] = @rssi_history[rx.channel][1, RSSI_HISTORY_LEN - 1] + [-127]
+      @rssi_history[rx.channel][RSSI_HISTORY_LEN - 1] = rx.rssi_max
 
-        # Alternatively, use all banks in history.
-        signal_level = @rssi_history[rx.channel][0]
-        (1..RSSI_HISTORY_LEN-1).each do |i|
-            signal_level = [signal_level, @rssi_history[rx.channel][i] ].max
-        end
-        signal_level += RSSI_BASE
+      # Alternatively, use all banks in history.
+      signal_level = @rssi_history[rx.channel][0]
+      (1..RSSI_HISTORY_LEN - 1).each do |i|
+        signal_level = [signal_level, @rssi_history[rx.channel][i]].max
+      end
+      signal_level += RSSI_BASE
 
-        # Noise is an IIR of averages
-        noise_level = rx.rssi_avg + RSSI_BASE
-        snr = signal_level - noise_level
+      # Noise is an IIR of averages
+      noise_level = rx.rssi_avg + RSSI_BASE
+      snr = signal_level - noise_level
 
-        # Copy 2 oldest banks of symbols for analysis. Packet may
-        # cross a bank boundary.
-        copy_banks 0, 1, bank, syms
+      # Copy 2 oldest banks of symbols for analysis. Packet may
+      # cross a bank boundary.
+      copy_banks 0, 1, bank, syms
 
-        ac = find_ac( syms, Ubertooth::BANK_LEN, MAX_AC_ERRORS )
-        unless ac.nil?
-            offset,lap,ac_errors = ac
+      ac = find_ac(syms, Ubertooth::BANK_LEN, MAX_AC_ERRORS)
+      return if ac.nil?
 
-            # Copy out remaining banks of symbols for full analysis.
-            copy_banks 0, NUM_BANKS-1, bank, syms
-            
-            # Once offset is known for a valid packet, copy in symbols
-            # and other rx data. CLKN here is the 312.5us CLK27-0. The
-            # btbb library can shift it be CLK1 if needed.
-            clkn = (rx.clkn_high << 20) + ( rx.clk100ns + offset + 1562) / 3125
-            # build and return data + packet
-            btpacket = BtPacket.build(
-                lap,
-                ac_errors,
-                rx.channel,
-                clkn,
-                syms[offset,syms.size],
-                NUM_BANKS * Ubertooth::BANK_LEN - offset
-            )
+      offset, lap, ac_errors = ac
 
-            [ signal_level, noise_level, snr, btpacket ]
-        else
-            nil
-        end
+      # Copy out remaining banks of symbols for full analysis.
+      copy_banks 0, NUM_BANKS - 1, bank, syms
+
+      # Once offset is known for a valid packet, copy in symbols
+      # and other rx data. CLKN here is the 312.5us CLK27-0. The
+      # btbb library can shift it be CLK1 if needed.
+      clkn = (rx.clkn_high << 20) + (rx.clk100ns + offset + 1562) / 3125
+      # build and return data + packet
+      btpacket = BtPacket.build(
+        lap,
+        ac_errors,
+        rx.channel,
+        clkn,
+        syms[offset, syms.size],
+        NUM_BANKS * Ubertooth::BANK_LEN - offset
+      )
+
+      [signal_level, noise_level, snr, btpacket]
     end
 
-    def copy_banks from, to, bank, syms
-        (from..to).each do |i|
-            s_offset = i * Ubertooth::BANK_LEN
-            b_index = (i + 1 + bank) % NUM_BANKS
-            Ubertooth::BANK_LEN.times do |j|
-                syms[s_offset + j] = @symbols[b_index][j]
-            end
+    def copy_banks(from, to, bank, syms)
+      (from..to).each do |i|
+        s_offset = i * Ubertooth::BANK_LEN
+        b_index = (i + 1 + bank) % NUM_BANKS
+        Ubertooth::BANK_LEN.times do |j|
+          syms[s_offset + j] = @symbols[b_index][j]
         end
+      end
     end
 
-    def unpack_symbols buf, bank
-        SYM_LEN.times do |i|
-            # pad to 8 bits
-            bits = buf[i].to_i.to_s(2).chars.map!(&:to_i)
-            (8-bits.size).times do |i|
-                bits = [0] + bits
-            end
-            # output one byte for each received symbol (0x00 or 0x01)
-            bits.each_with_index do |bit,j|
-                @symbols[bank][i * 8 + j] = bit
-            end
+    def unpack_symbols(buf, bank)
+      SYM_LEN.times do |i|
+        # pad to 8 bits
+        bits = buf[i].to_i.to_s(2).chars.map!(&:to_i)
+        (8 - bits.size).times do
+          bits = [0] + bits
         end
+        # output one byte for each received symbol (0x00 or 0x01)
+        bits.each_with_index do |bit, j|
+          @symbols[bank][i * 8 + j] = bit
+        end
+      end
     end
 
-    def find_ac stream, search_length, max_ac_errors
-        # Barker code at end of sync word (includes
-        # MSB of LAP) is used as a rough filter.
-        barker = Assembler.air_to_host stream[57,6], 6
-        barker <<= 1
+    def find_ac(stream, search_length, max_ac_errors)
+      # Barker code at end of sync word (includes
+      # MSB of LAP) is used as a rough filter.
+      barker = Assembler.air_to_host stream[57, 6], 6
+      barker <<= 1
 
-        search_length.times do |count|
-            symbols = stream[count,stream.size]
-            barker >>= 1
-            barker |= (symbols[63] << 6)
+      search_length.times do |count|
+        symbols = stream[count, stream.size]
+        barker >>= 1
+        barker |= (symbols[63] << 6)
 
-            if BARKER_DISTANCE[barker] <= MAX_BARKER_ERRORS
-                # Error correction
-                syncword = Assembler.air_to_host symbols, 64
-                # correct the barker code with a simple comparison
-                corrected_barker = BARKER_CORRECT[syncword >> 57]
-                syncword = (syncword & 0x01ffffffffffffff) | corrected_barker
-                codeword = syncword ^ PN
-                # Zero syndrome -> good codeword.
-                syndrome = Assembler.gen_syndrome codeword
-                ac_errors = 0
+        if BARKER_DISTANCE[barker] <= MAX_BARKER_ERRORS
+          # Error correction
+          syncword = Assembler.air_to_host symbols, 64
+          # correct the barker code with a simple comparison
+          corrected_barker = BARKER_CORRECT[syncword >> 57]
+          syncword = (syncword & 0x01ffffffffffffff) | corrected_barker
+          codeword = syncword ^ PN
+          # Zero syndrome -> good codeword.
+          syndrome = Assembler.gen_syndrome codeword
+          ac_errors = 0
 
-                # Try to fix errors in bad codeword.
-                if syndrome > 0
-                    error = Assembler.find_syndrome syndrome
-                    if error.nil?
-                        ac_errors = 0xff # fail
-                    else
-                        syncword ^= error
-                        ac_errors = Assembler.count_bits error
-                        syndrome = 0
-                    end
-                end
-
-                if ac_errors <= max_ac_errors
-                    lap = (syncword >> 34) & 0xffffff
-                    return [ count, lap, ac_errors ]
-                end
+          # Try to fix errors in bad codeword.
+          if syndrome > 0
+            error = Assembler.find_syndrome syndrome
+            if error.nil?
+              ac_errors = 0xff # fail
+            else
+              syncword ^= error
+              ac_errors = Assembler.count_bits error
             end
+          end
+
+          if ac_errors <= max_ac_errors
+            lap = (syncword >> 34) & 0xffffff
+            return [count, lap, ac_errors]
+          end
         end
-        nil
+      end
+      nil
     end
 
     # Convert some number of bits of an air order array to a host order integer
-    def self.air_to_host air_order, bits
-        air_order[0,bits].reverse.join.to_i(2)
+    def self.air_to_host(air_order, bits)
+      air_order[0, bits].reverse.join.to_i(2)
     end
 
-    def self.gen_syndrome codeword
-        syndrome = codeword & 0xffffffff
+    def self.gen_syndrome(codeword)
+      syndrome = codeword & 0xffffffff
 
-        codeword >>= 32
-        syndrome ^= SW_CHECK_TABLE4[codeword & 0xff]
-        codeword >>= 8
-        syndrome ^= SW_CHECK_TABLE5[codeword & 0xff]
-        codeword >>= 8
-        syndrome ^= SW_CHECK_TABLE6[codeword & 0xff]
-        codeword >>= 8
-        syndrome ^= SW_CHECK_TABLE7[codeword & 0xff]
+      codeword >>= 32
+      syndrome ^= SW_CHECK_TABLE4[codeword & 0xff]
+      codeword >>= 8
+      syndrome ^= SW_CHECK_TABLE5[codeword & 0xff]
+      codeword >>= 8
+      syndrome ^= SW_CHECK_TABLE6[codeword & 0xff]
+      codeword >>= 8
+      syndrome ^= SW_CHECK_TABLE7[codeword & 0xff]
 
-        syndrome
+      syndrome
     end
 
-    def self.cycle error, start, depth, codeword
-        base = 1
-        depth -= 1
-        (start..57).each do |i|
-            new_error = (base << i)
-            new_error |= error
+    def self.cycle(error, start, depth, codeword)
+      base = 1
+      depth -= 1
+      (start..57).each do |i|
+        new_error = (base << i)
+        new_error |= error
 
-            if depth > 0
-                self.cycle new_error, i + 1, depth, codeword
-            else
-                syndrome = self.gen_syndrome codeword ^ new_error
-                @@syndrome_map[syndrome] = new_error
-            end
+        if depth > 0
+          cycle new_error, i + 1, depth, codeword
+        else
+          syndrome = gen_syndrome codeword ^ new_error
+          @syndrome_map[syndrome] = new_error
         end
+      end
     end
 
-    def self.find_syndrome syndrome
-        # generate syndrome map
-        if @@syndrome_map.nil?
-            @@syndrome_map = {}
-            bit_errors = 2
-            (1..bit_errors).each do |i|
-                self.cycle 0, 0, i, DEFAULT_AC
-            end
+    def self.find_syndrome(syndrome)
+      # generate syndrome map
+      if @syndrome_map.nil?
+        @syndrome_map = {}
+        bit_errors = 2
+        (1..bit_errors).each do |i|
+          cycle 0, 0, i, DEFAULT_AC
         end
-        @@syndrome_map[syndrome]
+      end
+      @syndrome_map[syndrome]
     end
 
     # count the number of 1 bits in a number
-    def self.count_bits n
-        i = 0
-        loop do
-            n &= n - 1
-            break unless n != 0
-            i += 1
-        end
-        i
+    def self.count_bits(n)
+      i = 0
+      loop do
+        n &= n - 1
+        break unless n != 0
+        i += 1
+      end
+      i
     end
-end
-
+  end
 end
