@@ -1,15 +1,15 @@
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
 require 'ubertooth'
-require 'usbpktrx'
-require 'lepacket'
+require 'usb_pkt_rx'
+require 'le_packet'
 
 uber = RUbertooth::Ubertooth.new
 
 puts "Found device: '#{uber.device.inspect}'"
 
 # set sweep mode
-uber.set_channel 9999
+uber.channel = 9999
 
 puts "Waiting for data ...\n\n"
 
