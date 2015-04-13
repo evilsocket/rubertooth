@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.summary      = 'Ubertooth library port for ruby'
   s.homepage     = 'https://github.com/evilsocket/rubertooth'
   s.description  = %q{This is an ubertooth manipulation library for Ruby. With it, users can read, parse, and write bluetooth packets.}
-  s.files        = Dir['README.md', 'exe/**/*', 'lib/**/{*,.[a-z]*}']
+  s.files        = Dir['exe/**/*', 'lib/**/{*,.[a-z]*}']
   s.require_path = 'lib'
   s.bindir       = 'exe'
   s.executables  = ['ble-sniff.rb', 'stream-rx.rb']
