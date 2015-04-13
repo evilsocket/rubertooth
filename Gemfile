@@ -1,4 +1,4 @@
 source 'https://rubygems.org'
 
-gem 'libusb'
-gem 'bindata'
+# Specify your gem's dependencies in rubertooth.gemspec
+gemspec
