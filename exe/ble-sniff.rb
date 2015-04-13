@@ -1,20 +1,19 @@
+#!/bin/env ruby
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
-require 'ubertooth'
-require 'usbpktrx'
-require 'lepacket'
+require 'rubertooth'
 
 MODES = { :follow => 0, :promisc => 1 }
 
-mode = MODES[:follow]
+mode = MODES[:promisc]
 uber = RUbertooth::Ubertooth.new
 
 puts "Found device: '#{uber.device.inspect}'"
 
-uber.set_modulation RUbertooth::Ubertooth::MODULATIONS[:MOD_BT_LOW_ENERGY]
+uber.modulation = RUbertooth::Ubertooth::MODULATIONS[:MOD_BT_LOW_ENERGY]
 
 if mode == MODES[:follow]
-    uber.set_channel 2402
+    uber.channel = 2402
     uber.btle_sniffing 2
 else
     uber.btle_promisc
