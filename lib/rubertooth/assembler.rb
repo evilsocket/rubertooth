@@ -1,5 +1,4 @@
 require 'bt_packet'
-
 module RUbertooth
 
   # Class to reassemble streams of data from the device removing noise.
