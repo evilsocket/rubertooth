@@ -1,8 +1,6 @@
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
-require 'ubertooth'
-require 'usb_pkt_rx'
-require 'le_packet'
+require 'rubertooth'
 
 MODES = { :follow => 0, :promisc => 1 }
 
