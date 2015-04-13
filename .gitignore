@@ -3,3 +3,4 @@
 *.swo
 .*.swo
 Gemfile.lock
+*.gem
