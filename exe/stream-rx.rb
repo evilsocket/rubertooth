@@ -1,7 +1,7 @@
 #!/bin/env ruby
 $LOAD_PATH.unshift File.expand_path("../../lib", __FILE__)
 
-require 'ubertooth'
+require 'rubertooth'
 
 uber = RUbertooth::Ubertooth.new
 
